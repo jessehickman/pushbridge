@@ -529,17 +529,6 @@ class OptionsPage {
             <input type="checkbox" id="system-theme-toggle" class="toggle" checked="${this.settings.systemTheme}">
           </div>
         </div>
-
-        <div class="setting-item">
-          <div class="setting-info">
-            <label>Navigation order</label>
-            <p>Drag to rearrange and click the eye icon to toggle visibility</p>
-          </div>
-          <div class="setting-control">
-            <ul id="option-order" class="dnd-list"></ul>
-          </div>
-        </div>
-
       </div>
 
       <div class="settings-section">
