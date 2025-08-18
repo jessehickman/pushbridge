@@ -1,6 +1,10 @@
 // Popup entry point
 console.log('Pushbridge popup loaded');
 
+// Import theme component
+import { bootTheme } from './components/pb-theme';
+bootTheme();
+
 // Import components
 import './components/pb-token-setup';
 import './components/pb-composer';
@@ -14,12 +18,6 @@ import {
   hasSmsCapableDevices,
   getDefaultSmsDevice,
 } from '../background/deviceManager';
-import {
-  getOptionOrder,
-  getHiddenTabs,
-  buildTabButtonsHTML,
-  activateInitialPane,
-} from './components/pb-nav';
 
 import { getLocal } from '../background/storage';
 
@@ -68,18 +66,17 @@ async function initializePopup() {
       // Check if user has SMS-capable devices
       const hasSms = await hasSmsCapableDevices();
       const defaultSmsDevice = hasSms ? await getDefaultSmsDevice() : null;
-      const [order, hidden] = await Promise.all([
-        getOptionOrder(),
-        getHiddenTabs(),
-      ]);
-
       // Show main UI with tabs
       container.innerHTML = `
         <div class="popup-container">
           <div class="popup-header">
             <h2 class="popup-title">Pushbridge</h2>
             <div class="tab-navigation">
-              ${buildTabButtonsHTML(order, hasSms, hidden)}
+              <button class="tab-button active" data-tab="composer">Send</button>
+              <button class="tab-button" data-tab="pushes">Messages</button>
+              <button class="tab-button" data-tab="notifications">Notifications Mirroring</button>
+              <button class="tab-button" data-tab="channels">Subscriptions</button>
+              ${hasSms ? '<button class="tab-button" data-tab="messages">SMS/MMS</button>' : ''}
             </div>
           </div>
           <div class="tab-content">
@@ -127,9 +124,6 @@ async function initializePopup() {
             </div>
         </div>
       `;
-
-      // Activate initial tab pane
-      activateInitialPane(container);
 
       // Initialize tab switching
       setupTabNavigation();
@@ -336,9 +330,7 @@ async function launchOpenInWindowButton() {
 
   try {
     const wins = await chrome.windows.getAll({ populate: true });
-    const existing = wins.find(w =>
-      w.tabs?.some(t => t.url?.startsWith(url))
-    );
+    const existing = wins.find(w => w.tabs?.some(t => t.url?.startsWith(url)));
 
     if (existing) {
       await chrome.windows.update(existing.id!, {
@@ -810,6 +802,104 @@ style.textContent = `
       flex: 1;
       min-width: 0;
     }
+  }
+
+  /* === Dark mode overrides === */
+  :host-context(html[data-theme='dark']) {
+    --scrollbar-track: #1e1e1e;
+    --scrollbar-thumb: #4b5563;
+    --scrollbar-thumb-hover: #6b7280;
+    --surface: #121212;
+    --surface-alt: #1e1e1e;
+    --border-color: #2d2d2d;
+    --text-primary: #e6e1e3;
+    --text-secondary: #a1a1aa;
+    --accent: #8b5cf6;
+    --accent-hover: #7c3aed;
+  }
+
+  :host-context(html[data-theme='dark']) * {
+    scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+  }
+
+  :host-context(html[data-theme='dark']) *::-webkit-scrollbar-track {
+    background: var(--scrollbar-track);
+  }
+
+  :host-context(html[data-theme='dark']) *::-webkit-scrollbar-thumb {
+    background: var(--scrollbar-thumb);
+  }
+
+  :host-context(html[data-theme='dark']) *::-webkit-scrollbar-thumb:hover {
+    background: var(--scrollbar-thumb-hover);
+  }
+
+  :host-context(html[data-theme='dark']) .popup-header {
+    background: var(--surface-alt);
+    border-bottom-color: var(--border-color);
+  }
+
+  :host-context(html[data-theme='dark']) .popup-title {
+    color: var(--text-primary);
+  }
+
+  :host-context(html[data-theme='dark']) .tab-navigation {
+    background: var(--surface) !important;
+    border-color: var(--border-color) !important;
+  }
+
+  :host-context(html[data-theme='dark']) .tab-button {
+    color: var(--text-secondary);
+  }
+
+  :host-context(html[data-theme='dark']) .tab-button.active {
+    background: var(--accent);
+    color: white;
+  }
+
+  :host-context(html[data-theme='dark']) .tab-button:hover:not(.active) {
+    background: #1f1f1f;
+    color: var(--text-primary);
+  }
+
+  :host-context(html[data-theme='dark']) .sms-thread-header {
+    background: var(--surface-alt);
+    border-bottom-color: var(--border-color);
+  }
+
+  :host-context(html[data-theme='dark']) .conversation-title {
+    color: var(--text-primary);
+  }
+
+  :host-context(html[data-theme='dark']) .popup-footer {
+    background: var(--surface-alt);
+    border-top-color: var(--border-color);
+    color: var(--text-secondary);
+  }
+
+  :host-context(html[data-theme='dark']) .about-dialog {
+    background: var(--surface-alt);
+    color: var(--text-primary);
+  }
+
+  :host-context(html[data-theme='dark']) .about-header h3 {
+    color: var(--text-primary);
+  }
+
+  :host-context(html[data-theme='dark']) .about-content p {
+    color: var(--text-secondary);
+  }
+
+  :host-context(html[data-theme='dark']) .about-links a {
+    color: var(--accent);
+  }
+
+  :host-context(html[data-theme='dark']) .about-links a:hover {
+    color: var(--accent-hover);
+  }
+
+  :host-context(html[data-theme='dark']) .license-info a {
+    color: var(--accent);
   }
 `;
 document.head.appendChild(style);
