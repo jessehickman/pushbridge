@@ -329,6 +329,76 @@ export class PushComposer extends LitElement {
         font-size: 16px;
       }
     }
+
+    /* === Dark mode overrides === */
+    :host-context(html[data-theme='dark']) {
+      color: #dee2e6;
+      background: #212529;
+    }
+
+    :host-context(html[data-theme='dark']) .device-selector label,
+    :host-context(html[data-theme='dark']) .channel-input label,
+    :host-context(html[data-theme='dark']) .form-group label {
+      color: #dee2e6;
+    }
+
+    :host-context(html[data-theme='dark']) .device-selector select,
+    :host-context(html[data-theme='dark']) .form-group input,
+    :host-context(html[data-theme='dark']) .form-group textarea {
+      background: #343a40;
+      color: #dee2e6;
+      border-color: #495057;
+    }
+
+    :host-context(html[data-theme='dark']) .form-group input::placeholder,
+    :host-context(html[data-theme='dark']) .form-group textarea::placeholder {
+      color: #adb5bd;
+    }
+
+    :host-context(html[data-theme='dark']) .form-group input:focus,
+    :host-context(html[data-theme='dark']) .form-group textarea:focus,
+    :host-context(html[data-theme='dark']) .device-selector select:focus {
+      border-color: #0d6efd;
+      box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+    }
+
+    :host-context(html[data-theme='dark']) .form-text {
+      color: rgba(222, 226, 230, 0.75);
+    }
+
+    :host-context(html[data-theme='dark']) .send-button {
+      background: #0d6efd;
+      color: #fff;
+    }
+
+    :host-context(html[data-theme='dark']) .send-button:hover:not(:disabled) {
+      background: #0b5ed7;
+      box-shadow: 0 4px 12px rgba(13, 110, 253, 0.3);
+    }
+
+    :host-context(html[data-theme='dark']) .send-button:disabled {
+      background: #6c757d;
+    }
+
+    :host-context(html[data-theme='dark']) .message.error {
+      background: #2c0b0e;
+      color: #ea868f;
+      border-color: #842029;
+      border-left-color: #ea868f;
+    }
+
+    :host-context(html[data-theme='dark']) .message.success {
+      background: #051b11;
+      color: #75b798;
+      border-color: #0f5132;
+      border-left-color: #75b798;
+    }
+
+    :host-context(html[data-theme='dark']) .shortcut-hint {
+      color: rgba(222, 226, 230, 0.75);
+      background: #2b3035;
+      border-color: #495057;
+    }
   `;
 
   connectedCallback() {
