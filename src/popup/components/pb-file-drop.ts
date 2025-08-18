@@ -33,6 +33,7 @@ export class PbFileDrop extends LitElement {
   private maxFileSize = 25 * 1024 * 1024; // 25MB
 
   static styles = css`
+    /* === Light mode base === */
     :host {
       display: block;
       font-family:

@@ -67,6 +67,7 @@ export class PbSmsThread extends LitElement {
   }
 
   static styles = css`
+    /* === Light mode base === */
     :host {
       display: flex;
       flex-direction: column;

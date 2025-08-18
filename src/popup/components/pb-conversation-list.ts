@@ -26,6 +26,7 @@ export class PbConversationList extends LitElement {
   private filteredConversations: SmsThread[] = [];
 
   static styles = css`
+    /* === Light mode base === */
     :host {
       display: flex;
       flex-direction: column;

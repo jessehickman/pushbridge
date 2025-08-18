@@ -42,6 +42,7 @@ export class PushComposer extends LitElement {
   private messageTimeout: number | null = null;
 
   static styles = css`
+    /* === Light mode base === */
     :host {
       display: block;
       font-family:
@@ -369,11 +370,12 @@ export class PushComposer extends LitElement {
   private async loadSendTargets() {
     try {
       // Get devices, owned channels, and contacts in parallel
-      const [devicesResponse, channelsResponse, contactsResponse] = await Promise.all([
-        chrome.runtime.sendMessage({ cmd: 'getDevices' }),
-        chrome.runtime.sendMessage({ cmd: 'GET_OWNED_CHANNELS' }),
-        chrome.runtime.sendMessage({ cmd: 'getContacts' }),
-      ]);
+      const [devicesResponse, channelsResponse, contactsResponse] =
+        await Promise.all([
+          chrome.runtime.sendMessage({ cmd: 'getDevices' }),
+          chrome.runtime.sendMessage({ cmd: 'GET_OWNED_CHANNELS' }),
+          chrome.runtime.sendMessage({ cmd: 'getContacts' }),
+        ]);
 
       const devices = devicesResponse.ok ? devicesResponse.devices : [];
       const channels = channelsResponse.success
@@ -584,7 +586,9 @@ export class PushComposer extends LitElement {
             targetDeviceIden:
               selectedTarget?.type === 'device' ? selectedTarget.id : undefined,
             email:
-              selectedTarget?.type === 'contact' ? selectedTarget.id : undefined,
+              selectedTarget?.type === 'contact'
+                ? selectedTarget.id
+                : undefined,
             // Include push metadata for file pushes
             title: this.pushTitle.trim() || undefined,
             body: this.body.trim() || undefined,

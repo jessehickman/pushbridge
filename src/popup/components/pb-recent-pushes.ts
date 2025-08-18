@@ -76,6 +76,7 @@ export class RecentPushes extends LitElement {
   private currentDeviceIden?: string;
 
   static styles = css`
+    /* === Light mode base === */
     :host {
       display: block;
       font-family:
@@ -1222,8 +1223,12 @@ export class RecentPushes extends LitElement {
                         : push.type === 'file'
                           ? push.file_name || 'File'
                           : 'Untitled')}
-                      ${push.sender_name 
-                        ? html`<span style="font-weight: normal; color: #666; font-size: 12px;"> • from ${push.sender_name}</span>`
+                      ${push.sender_name
+                        ? html`<span
+                            style="font-weight: normal; color: #666; font-size: 12px;"
+                          >
+                            • from ${push.sender_name}</span
+                          >`
                         : ''}
                     </h4>
                     <div class="push-actions">

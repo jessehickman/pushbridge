@@ -25,6 +25,7 @@ export class PbMirrorList extends LitElement {
   @state() private error: string | null = null;
 
   static styles = css`
+    /* === Light mode base === */
     :host {
       display: block;
       width: 100%;

@@ -453,3 +453,45 @@ body {
     font-size: 22px;
   }
 }
+
+/* list */
+.dnd-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px }
+
+/* each row: [handle][label][button] */
+.dnd-item {
+  display: grid;
+  grid-template-columns: 20px 1fr auto; /* <-- add 3rd column for the button */
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border: 1px solid var(--border-color, #ccc);
+  border-radius: 8px;
+  background: var(--surface, #fff);
+}
+
+.dnd-item.dragging { opacity: .6 }
+.dnd-item .handle { cursor: grab; user-select: none }
+.dnd-item .label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
+
+.toggle-visibility {
+  appearance: none;
+  border: none;
+  border-radius: 9999px;
+  padding: 4px 12px;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.toggle-visibility {
+  background-color: #e0e7ff; /* light indigo */
+  color: #1e3a8a;            /* dark indigo text */
+}
+
+.toggle-visibility[data-state="hide"] {
+  background-color: #fee2e2; /* light red */
+  color: #991b1b;            /* dark red text */
+}

@@ -16,6 +16,7 @@ export class PbTokenSetup extends LitElement {
   private isSuccess = false;
 
   static styles = css`
+    /* === Light mode base === */
     :host {
       display: block;
       font-family:
@@ -303,7 +304,7 @@ export class PbTokenSetup extends LitElement {
 
       if (response.ok) {
         this.isSuccess = true;
-        
+
         // Show success message briefly before refreshing popup
         setTimeout(() => {
           // Dispatch custom event for parent components

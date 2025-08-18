@@ -38,6 +38,7 @@ export class PbChannels extends LitElement {
   private searchTimeout: number | null = null;
 
   static styles = css`
+    /* === Light mode base === */
     :host {
       display: block;
       padding: 16px;
@@ -52,13 +53,11 @@ export class PbChannels extends LitElement {
       flex-direction: column;
       gap: 16px;
     }
-
     .search-section {
       display: flex;
       flex-direction: column;
       gap: 12px;
     }
-
     .search-input {
       padding: 8px 12px;
       border: 1px solid #ddd;
@@ -67,17 +66,14 @@ export class PbChannels extends LitElement {
       outline: none;
       transition: border-color 0.2s;
     }
-
     .search-input:focus {
       border-color: #007bff;
     }
-
     .subtab-navigation {
       display: flex;
       margin-bottom: 16px;
       border-bottom: 1px solid #eee;
     }
-
     .subtab-button {
       background: none;
       border: none;
@@ -88,21 +84,17 @@ export class PbChannels extends LitElement {
       border-bottom: 2px solid transparent;
       transition: all 0.2s;
     }
-
     .subtab-button.active {
       color: #007bff;
       border-bottom-color: #007bff;
     }
-
     .subtab-button:hover:not(.active) {
       color: #333;
       background: #f8f9fa;
     }
-
     .recent-pushes-section {
       padding: 16px 0;
     }
-
     .recent-pushes-content {
       padding: 20px;
       text-align: center;
@@ -110,20 +102,17 @@ export class PbChannels extends LitElement {
       background: #f8f9fa;
       border-radius: 6px;
     }
-
     .loading-indicator {
       text-align: center;
       padding: 20px;
       color: #666;
       font-style: italic;
     }
-
     .subscription-posts {
       display: flex;
       flex-direction: column;
       gap: 12px;
     }
-
     .post-card {
       background: white;
       border: 1px solid #e9ecef;
@@ -131,12 +120,10 @@ export class PbChannels extends LitElement {
       padding: 16px;
       transition: all 0.2s;
     }
-
     .post-card:hover {
       border-color: #007bff;
       box-shadow: 0 2px 8px rgba(0, 123, 255, 0.1);
     }
-
     .post-header {
       display: flex;
       justify-content: space-between;
@@ -144,7 +131,6 @@ export class PbChannels extends LitElement {
       margin-bottom: 12px;
       font-size: 12px;
     }
-
     .post-header .channel-name {
       background: #007bff;
       color: white;
@@ -152,42 +138,35 @@ export class PbChannels extends LitElement {
       border-radius: 4px;
       font-weight: 600;
     }
-
     .post-date {
       color: #666;
     }
-
     .post-content {
       display: flex;
       flex-direction: column;
       gap: 8px;
     }
-
     .post-title {
       margin: 0;
       font-size: 14px;
       font-weight: 600;
       color: #333;
     }
-
     .post-body {
       margin: 0;
       font-size: 13px;
       color: #555;
       line-height: 1.4;
     }
-
     .post-link {
       color: #007bff;
       text-decoration: none;
       font-size: 13px;
       font-weight: 500;
     }
-
     .post-link:hover {
       text-decoration: underline;
     }
-
     .search-results {
       display: flex;
       flex-direction: column;
@@ -197,7 +176,6 @@ export class PbChannels extends LitElement {
       -webkit-overflow-scrolling: touch;
       scroll-behavior: smooth;
     }
-
     .channel-card {
       display: flex;
       align-items: center;
@@ -208,12 +186,10 @@ export class PbChannels extends LitElement {
       background: white;
       transition: all 0.2s;
     }
-
     .channel-card:hover {
       border-color: #007bff;
       box-shadow: 0 2px 8px rgba(0, 123, 255, 0.1);
     }
-
     .channel-icon {
       width: 40px;
       height: 40px;
@@ -226,12 +202,10 @@ export class PbChannels extends LitElement {
       font-size: 16px;
       color: #6c757d;
     }
-
     .channel-info {
       flex: 1;
       min-width: 0;
     }
-
     .channel-name {
       font-weight: 600;
       font-size: 14px;
@@ -241,7 +215,6 @@ export class PbChannels extends LitElement {
       overflow: hidden;
       text-overflow: ellipsis;
     }
-
     .channel-description {
       font-size: 12px;
       color: #666;
@@ -251,7 +224,6 @@ export class PbChannels extends LitElement {
       -webkit-box-orient: vertical;
       overflow: hidden;
     }
-
     .channel-tag {
       font-size: 11px;
       color: #999;
@@ -262,7 +234,6 @@ export class PbChannels extends LitElement {
       margin-top: 4px;
       display: inline-block;
     }
-
     .subscribe-button {
       padding: 6px 12px;
       background: #007bff;
@@ -274,16 +245,13 @@ export class PbChannels extends LitElement {
       transition: background-color 0.2s;
       white-space: nowrap;
     }
-
     .subscribe-button:hover {
       background: #0056b3;
     }
-
     .subscribe-button:disabled {
       background: #6c757d;
       cursor: not-allowed;
     }
-
     .subscribed-badge {
       padding: 6px 12px;
       background: #28a745;
@@ -292,27 +260,23 @@ export class PbChannels extends LitElement {
       font-size: 12px;
       white-space: nowrap;
     }
-
     .subscriptions-section {
       display: flex;
       flex-direction: column;
       gap: 12px;
     }
-
     .section-title {
       font-size: 16px;
       font-weight: 600;
       color: #333;
       margin: 0;
     }
-
     .section-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
       margin-bottom: 12px;
     }
-
     .refresh-button {
       padding: 6px 12px;
       background: #6c757d;
@@ -326,16 +290,13 @@ export class PbChannels extends LitElement {
       align-items: center;
       gap: 4px;
     }
-
     .refresh-button:hover:not(:disabled) {
       background: #5a6268;
     }
-
     .refresh-button:disabled {
       background: #adb5bd;
       cursor: not-allowed;
     }
-
     .subscription-item {
       display: flex;
       align-items: center;
@@ -345,7 +306,6 @@ export class PbChannels extends LitElement {
       border-radius: 8px;
       background: white;
     }
-
     .unsubscribe-button {
       padding: 6px 12px;
       background: #dc3545;
@@ -356,18 +316,15 @@ export class PbChannels extends LitElement {
       cursor: pointer;
       transition: background-color 0.2s;
     }
-
     .unsubscribe-button:hover {
       background: #c82333;
     }
-
     .loading {
       text-align: center;
       color: #666;
       font-size: 14px;
       padding: 20px;
     }
-
     .error-message {
       color: #dc3545;
       font-size: 14px;
@@ -377,7 +334,6 @@ export class PbChannels extends LitElement {
       border-radius: 4px;
       margin-bottom: 12px;
     }
-
     .success-message {
       color: #155724;
       font-size: 14px;
@@ -387,7 +343,6 @@ export class PbChannels extends LitElement {
       border-radius: 4px;
       margin-bottom: 12px;
     }
-
     .empty-state {
       text-align: center;
       color: #666;

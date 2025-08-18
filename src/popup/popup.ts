@@ -7,7 +7,6 @@ import './components/pb-composer';
 import './components/pb-recent-pushes';
 import './components/pb-mirror-list';
 import './components/pb-file-drop';
-
 import './components/pb-sms-thread';
 import './components/pb-conversation-list';
 import './components/pb-channels';
@@ -15,6 +14,13 @@ import {
   hasSmsCapableDevices,
   getDefaultSmsDevice,
 } from '../background/deviceManager';
+import {
+  getOptionOrder,
+  getHiddenTabs,
+  buildTabButtonsHTML,
+  activateInitialPane,
+} from './components/pb-nav';
+
 import { getLocal } from '../background/storage';
 
 // Initialize popup
@@ -48,7 +54,7 @@ async function initializePopup() {
     if (!token) {
       // Show token setup UI
       container.innerHTML = '<pb-token-setup></pb-token-setup>';
-      
+
       // Add event listener for token verification
       const tokenSetup = document.querySelector('pb-token-setup');
       if (tokenSetup) {
@@ -62,6 +68,10 @@ async function initializePopup() {
       // Check if user has SMS-capable devices
       const hasSms = await hasSmsCapableDevices();
       const defaultSmsDevice = hasSms ? await getDefaultSmsDevice() : null;
+      const [order, hidden] = await Promise.all([
+        getOptionOrder(),
+        getHiddenTabs(),
+      ]);
 
       // Show main UI with tabs
       container.innerHTML = `
@@ -69,12 +79,7 @@ async function initializePopup() {
           <div class="popup-header">
             <h2 class="popup-title">Pushbridge</h2>
             <div class="tab-navigation">
-              <button class="tab-button active" data-tab="composer">Send</button>
-              <button class="tab-button" data-tab="pushes">Messages</button>
-              <button class="tab-button" data-tab="notifications">Notifications Mirroring</button>
-
-              <button class="tab-button" data-tab="channels">Subscriptions</button>
-              ${hasSms ? '<button class="tab-button" data-tab="messages">SMS/MMS</button>' : ''}
+              ${buildTabButtonsHTML(order, hasSms, hidden)}
             </div>
           </div>
           <div class="tab-content">
@@ -115,10 +120,16 @@ async function initializePopup() {
                 <span class="copyright">© 2025 Pushbridge</span>
                 <span class="disclaimer">· Unofficial</span>
                 <button class="about-button" id="about-button">About</button>
+                <button id="open-window-btn" class="about-button">
+                  Open in Window
+                </button>
               </div>
             </div>
         </div>
       `;
+
+      // Activate initial tab pane
+      activateInitialPane(container);
 
       // Initialize tab switching
       setupTabNavigation();
@@ -130,6 +141,8 @@ async function initializePopup() {
 
       // Setup About dialog
       setupAboutDialog();
+
+      setupOpenInWindowButton();
     }
   } catch (error) {
     console.error('Failed to initialize popup:', error);
@@ -304,9 +317,53 @@ function showAboutDialog() {
   });
 }
 
+async function setupOpenInWindowButton() {
+  const windowButton = document.getElementById('open-window-btn');
+  if (!windowButton) return;
+
+  // hide if running in a tab instead of the extension popup panel
+  const tab = await chrome.tabs.getCurrent();
+  if (tab) {
+    windowButton.style.display = 'none';
+    return;
+  }
+
+  windowButton.addEventListener('click', launchOpenInWindowButton);
+}
+
+async function launchOpenInWindowButton() {
+  const url = chrome.runtime.getURL('popup.html?windowMode=1');
+
+  try {
+    const wins = await chrome.windows.getAll({ populate: true });
+    const existing = wins.find(w =>
+      w.tabs?.some(t => t.url?.startsWith(url))
+    );
+
+    if (existing) {
+      await chrome.windows.update(existing.id!, {
+        focused: true,
+        drawAttention: true,
+      });
+    } else {
+      await chrome.windows.create({
+        url,
+        type: 'popup',
+        width: 500,
+        height: 700,
+      });
+    }
+  } finally {
+    // Always close current popup
+    window.close();
+  }
+}
+
 // Add styles for the popup
 const style = document.createElement('style');
 style.textContent = `
+  /* === Light mode base === */
+
   /* Scrollbar styling for consistent appearance */
   * {
     scrollbar-width: thin;
