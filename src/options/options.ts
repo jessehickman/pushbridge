@@ -8,14 +8,6 @@ type OptionKey =
   | 'Subscriptions'
   | 'SMS/MMS';
 
-const DEFAULT_OPTION_ORDER: OptionKey[] = [
-  'Send',
-  'Messages',
-  'Notifications',
-  'Subscriptions',
-  'SMS/MMS',
-];
-
 interface Settings {
   soundEnabled: boolean;
   defaultDevice: string;
@@ -23,9 +15,17 @@ interface Settings {
   autoReconnect: boolean;
   defaultSmsDevice: string;
   autoOpenPushLinksAsTab: boolean;
-  systemTheme: boolean;
   optionOrder: OptionKey[];
+  hiddenTabs: OptionKey[];
 }
+
+const DEFAULT_OPTION_ORDER: OptionKey[] = [
+  'Send',
+  'Messages',
+  'Notifications',
+  'Subscriptions',
+  'SMS/MMS',
+];
 
 class OptionsPage {
   private settings: Settings = {
@@ -35,8 +35,8 @@ class OptionsPage {
     autoReconnect: true,
     defaultSmsDevice: '',
     autoOpenPushLinksAsTab: false,
-    systemTheme: false,
     optionOrder: DEFAULT_OPTION_ORDER.slice(),
+    hiddenTabs: [],
   };
 
   private devices: Array<{ iden: string; nickname: string; type: string }> = [];
@@ -48,33 +48,6 @@ class OptionsPage {
     model?: string;
   }> = [];
   private pendingSmsDeviceChange: string | null = null;
-  private themeMql?: MediaQueryList;
-
-  private ensureThemeListener() {
-    if (!this.settings.systemTheme) {
-      // remove if present
-      if (this.themeMql) {
-        this.themeMql.removeEventListener
-          ? this.themeMql.removeEventListener('change', this.onSchemeChange)
-          : this.themeMql.removeListener(this.onSchemeChange as any);
-        this.themeMql = undefined;
-      }
-      return;
-    }
-
-    if (!this.themeMql) {
-      this.themeMql = window.matchMedia('(prefers-color-scheme: dark)');
-      this.themeMql.addEventListener
-        ? this.themeMql.addEventListener('change', this.onSchemeChange)
-        : this.themeMql.addListener(this.onSchemeChange as any); // old API fallback
-    }
-  }
-
-  private onSchemeChange = () => {
-    if (!this.settings.systemTheme) return;
-    const dark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    document.documentElement.dataset.theme = dark ? 'dark' : 'light';
-  };
 
   async init() {
     await this.loadSettings();
@@ -82,12 +55,6 @@ class OptionsPage {
     await this.loadSmsDevices();
     this.render();
     this.setupEventListeners();
-    this.ensureThemeListener();
-    document.documentElement.dataset.theme =
-      this.settings.systemTheme &&
-      window.matchMedia('(prefers-color-scheme: dark)').matches
-        ? 'dark'
-        : 'light';
   }
 
   private async loadSettings() {
@@ -100,7 +67,7 @@ class OptionsPage {
       }
 
       // Load auto open push links setting from separate storage
-      if (stored.pb_settings.autoOpenPushLinksAsTab !== undefined) {
+      if (stored.pb_settings?.autoOpenPushLinksAsTab !== undefined) {
         this.settings.autoOpenPushLinksAsTab =
           stored.pb_settings.autoOpenPushLinksAsTab;
       } else {
@@ -119,15 +86,16 @@ class OptionsPage {
         this.settings.defaultSmsDevice = defaultSmsDevice.defaultSmsDevice;
       }
 
+      const allowedKeys = new Set<OptionKey>(DEFAULT_OPTION_ORDER);
+
       const normalizeOptionOrder = (order: unknown): OptionKey[] => {
-        const allowed = new Set<OptionKey>(DEFAULT_OPTION_ORDER);
         const seen = new Set<OptionKey>();
         const out: OptionKey[] = [];
         if (Array.isArray(order)) {
           for (const v of order) {
             if (
               typeof v === 'string' &&
-              allowed.has(v as OptionKey) &&
+              allowedKeys.has(v as OptionKey) &&
               !seen.has(v as OptionKey)
             ) {
               const k = v as OptionKey;
@@ -140,14 +108,36 @@ class OptionsPage {
         return out;
       };
 
-      const incoming =
+      const normalizeHiddenTabs = (list: unknown): OptionKey[] => {
+        if (!Array.isArray(list)) return [];
+        const seen = new Set<OptionKey>();
+        for (const v of list) {
+          if (typeof v === 'string' && allowedKeys.has(v as OptionKey)) {
+            seen.add(v as OptionKey);
+          }
+        }
+        return Array.from(seen);
+      };
+
+      const storedOrder =
         stored.pb_settings?.optionOrder ?? this.settings.optionOrder;
-      const normalized = normalizeOptionOrder(incoming);
-      const changed =
-        JSON.stringify(stored.pb_settings?.optionOrder) !==
-        JSON.stringify(normalized);
-      this.settings.optionOrder = normalized;
-      if (changed) await this.saveSettings();
+      const storedHidden =
+        stored.pb_settings?.hiddenTabs ?? this.settings.hiddenTabs ?? [];
+
+      const normalizedOrder = normalizeOptionOrder(storedOrder);
+      const normalizedHidden = normalizeHiddenTabs(storedHidden);
+
+      const orderChanged =
+        JSON.stringify(storedOrder) !== JSON.stringify(normalizedOrder);
+      const hiddenChanged =
+        JSON.stringify(storedHidden) !== JSON.stringify(normalizedHidden);
+
+      this.settings.optionOrder = normalizedOrder;
+      this.settings.hiddenTabs = normalizedHidden;
+
+      if (orderChanged || hiddenChanged) {
+        await this.saveSettings();
+      }
     } catch (error) {
       console.error('Failed to load settings:', error);
     }
@@ -215,24 +205,6 @@ class OptionsPage {
       await chrome.storage.local.set({
         pb_settings: this.settings,
       });
-      if (this.settings.systemTheme) {
-        if (!this.themeMql) {
-          this.themeMql = window.matchMedia('(prefers-color-scheme: dark)');
-          this.themeMql.addEventListener
-            ? this.themeMql.addEventListener('change', this.onSchemeChange)
-            : this.themeMql.addListener(this.onSchemeChange);
-        }
-      } else if (this.themeMql) {
-        this.themeMql.removeEventListener
-          ? this.themeMql.removeEventListener('change', this.onSchemeChange)
-          : this.themeMql.removeListener(this.onSchemeChange);
-        this.themeMql = undefined;
-      }
-      this.ensureThemeListener();
-      const dark = this.settings.systemTheme
-        ? window.matchMedia('(prefers-color-scheme: dark)').matches
-        : false;
-      document.documentElement.dataset.theme = dark ? 'dark' : 'light';
       this.showMessage('Settings saved successfully!', 'success');
     } catch (error) {
       console.error('Failed to save settings:', error);
@@ -374,37 +346,89 @@ class OptionsPage {
       });
     }
 
-    // System theme (auto) toggle
-    const systemThemeToggle = document.getElementById(
-      'system-theme-toggle'
-    ) as HTMLInputElement;
-    if (systemThemeToggle) {
-      systemThemeToggle.checked = !!this.settings.systemTheme;
-      systemThemeToggle.addEventListener('change', e => {
-        this.settings.systemTheme = (e.target as HTMLInputElement).checked;
-        this.saveSettings();
-      });
-    }
-
+    // Navigation order
     const ul = document.getElementById(
       'option-order'
     ) as HTMLUListElement | null;
     if (ul) {
       const renderOrder = () => {
-        ul.innerHTML = this.settings.optionOrder
-          .map(
-            k => `<li draggable="true" data-key="${k}" class="dnd-item">
-                   <span class="handle" aria-hidden="true">⋮⋮</span>
-                   <span class="label">${k}</span>
-                 </li>`
-          )
+        // Only include SMS/MMS if we have devices
+        const eligible = this.settings.optionOrder.filter(
+          k => k !== 'SMS/MMS' || this.smsDevices.length > 0
+        );
+        ul.innerHTML = eligible
+          .map(k => {
+            const isHidden = this.settings.hiddenTabs?.includes(k);
+
+            return `
+              <li draggable="true" data-key="${k}" class="dnd-item">
+                <span class="handle" aria-hidden="true">⋮⋮</span>
+                <span class="label">${k}</span>
+                <button type="button"
+                        class="toggle-visibility"
+                        data-key="${k}"
+                        data-state="${isHidden ? 'show' : 'hide'}">
+                  ${isHidden ? '<span class="material-symbols-outlined" style="font-size: 14px;">visibility</span>' : '<span class="material-symbols-outlined" style="font-size: 14px;">visibility_off</span>'}
+                </button>
+              </li>
+            `;
+          })
           .join('');
       };
       renderOrder();
 
+      ul.addEventListener('click', async e => {
+        const btn = (e.target as HTMLElement).closest<HTMLButtonElement>(
+          '.toggle-visibility'
+        );
+        if (!btn) return;
+        e.preventDefault();
+
+        const key = btn.dataset.key as OptionKey | undefined;
+        if (!key) return;
+
+        // ensure array exists
+        this.settings.hiddenTabs = Array.isArray(this.settings.hiddenTabs)
+          ? this.settings.hiddenTabs
+          : [];
+
+        const hidden = new Set<OptionKey>(this.settings.hiddenTabs);
+        const isCurrentlyHidden = hidden.has(key);
+
+        // Build the "effective" option order — skip SMS/MMS if no devices
+        const effectiveOrder = DEFAULT_OPTION_ORDER.filter(k =>
+          k === 'SMS/MMS' ? this.smsDevices.length > 0 : true
+        );
+
+        // If user is trying to hide this key, ensure at least one remains visible
+        if (!isCurrentlyHidden) {
+          const visibleCount = effectiveOrder.filter(
+            k => !hidden.has(k)
+          ).length;
+          if (visibleCount <= 1) {
+            this.showMessage('At least one tab must remain visible.', 'error');
+            return;
+          }
+          hidden.add(key); // hide it
+        } else {
+          hidden.delete(key); // show it
+        }
+
+        // persist
+        this.settings.hiddenTabs = Array.from(hidden);
+        await this.saveSettings();
+
+        // re-render list (updates button label/color via your renderOrder)
+        renderOrder();
+      });
+
       let draggingEl: HTMLElement | null = null;
 
       ul.addEventListener('dragstart', e => {
+        if ((e.target as HTMLElement).closest('.toggle-visibility')) {
+          e.preventDefault(); // don't drag when clicking the button
+          return;
+        }
         const li = (e.target as HTMLElement)?.closest(
           'li'
         ) as HTMLElement | null;
@@ -563,8 +587,8 @@ class OptionsPage {
         autoReconnect: true,
         defaultSmsDevice: '',
         autoOpenPushLinksAsTab: false,
-        systemTheme: false,
         optionOrder: DEFAULT_OPTION_ORDER.slice(),
+        hiddenTabs: [],
       };
       this.pendingSmsDeviceChange = null;
       await this.saveSettings();
@@ -596,8 +620,8 @@ class OptionsPage {
           autoReconnect: true,
           defaultSmsDevice: '',
           autoOpenPushLinksAsTab: false,
-          systemTheme: false,
           optionOrder: DEFAULT_OPTION_ORDER.slice(),
+          hiddenTabs: [],
         };
         this.pendingSmsDeviceChange = null;
         await this.saveSettings();
@@ -655,18 +679,8 @@ class OptionsPage {
 
         <div class="setting-item">
           <div class="setting-info">
-            <label for="system-theme-toggle">Match system theme</label>
-            <p>Automatically switch between light and dark mode based on your system settings</p>
-          </div>
-          <div class="setting-control">
-            <input type="checkbox" id="system-theme-toggle" class="toggle" checked="${this.settings.systemTheme}">
-          </div>
-        </div>
-
-        <div class="setting-item">
-          <div class="setting-info">
-            <label>Option order</label>
-            <p>Drag to rearrange.</p>
+            <label>Navigation order</label>
+            <p>Drag to rearrange and click the eye icon to toggle visibility</p>
           </div>
           <div class="setting-control">
             <ul id="option-order" class="dnd-list"></ul>
@@ -677,7 +691,7 @@ class OptionsPage {
 
       <div class="settings-section">
         <h2>Default Settings</h2>
-        
+
         <div class="setting-item">
           <div class="setting-info">
             <label for="default-device">Default target device</label>
@@ -791,7 +805,7 @@ class OptionsPage {
       </div>
 
       <div class="footer">
-        <p>Pushbridge v1.0.0 · <a href="https://github.com/manish001in/pushbridge" target="_blank">GitHub</a> · <a href="https://opensource.org/licenses/MIT" target="_blank">MIT License</a></p>
+        <p>Pushbridge v1.3.1 · <a href="https://github.com/manish001in/pushbridge" target="_blank">GitHub</a> · <a href="https://opensource.org/licenses/MIT" target="_blank">MIT License</a></p>
         <p class="disclaimer">This is an unofficial extension and is not affiliated with Pushbullet Inc.</p>
       </div>
     `;

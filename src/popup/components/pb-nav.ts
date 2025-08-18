@@ -14,7 +14,7 @@ export const TAB_DEF: Record<OptionKey, { tab: string; label: string }> = {
   Subscriptions: { tab: 'channels', label: 'Subscriptions' },
   'SMS/MMS': { tab: 'messages', label: 'SMS/MMS' },
 };
-// Keep SMS in defaults; we’ll skip rendering it if hasSms=false
+
 export const DEFAULT_ORDER: OptionKey[] = [
   'Send',
   'Messages',
@@ -23,10 +23,13 @@ export const DEFAULT_ORDER: OptionKey[] = [
   'SMS/MMS',
 ];
 
+const allowed = new Set<OptionKey>(DEFAULT_ORDER);
+
+/** Keep only valid keys, de-dupe, then append any missing in DEFAULT_ORDER order */
 export function normalizeOrder(order: unknown): OptionKey[] {
-  const allowed = new Set<OptionKey>(DEFAULT_ORDER);
   const seen = new Set<OptionKey>();
   const out: OptionKey[] = [];
+
   if (Array.isArray(order)) {
     for (const v of order) {
       if (typeof v === 'string' && allowed.has(v as OptionKey) && !seen.has(v as OptionKey)) {
@@ -40,14 +43,47 @@ export function normalizeOrder(order: unknown): OptionKey[] {
   return out;
 }
 
+/** Keep only valid keys, de-dupe */
+export function normalizeHidden(list: unknown): OptionKey[] {
+  if (!Array.isArray(list)) return [];
+  const seen = new Set<OptionKey>();
+  for (const v of list) {
+    if (typeof v === 'string' && allowed.has(v as OptionKey)) {
+      seen.add(v as OptionKey);
+    }
+  }
+  return Array.from(seen);
+}
+
+/** Read optionOrder from storage and normalize */
 export async function getOptionOrder(): Promise<OptionKey[]> {
   const pb = await getLocal<any>('pb_settings');
   return normalizeOrder(pb?.optionOrder ?? DEFAULT_ORDER);
 }
 
-/** Build buttons; first rendered one is active. SMS shown only if hasSms=true */
-export function buildTabButtonsHTML(order: OptionKey[], hasSms: boolean): string {
-  const renderOrder = order.filter(k => (k === 'SMS/MMS' ? hasSms : true));
+/** Read hiddenTabs from storage and normalize */
+export async function getHiddenTabs(): Promise<OptionKey[]> {
+  const pb = await getLocal<any>('pb_settings');
+  return normalizeHidden(pb?.hiddenTabs ?? []);
+}
+
+/**
+ * Build tab buttons HTML.
+ * Filters out hidden tabs and SMS when hasSms=false.
+ * First visible button gets .active.
+ */
+export function buildTabButtonsHTML(
+  order: OptionKey[],
+  hasSms: boolean,
+  hiddenTabs: OptionKey[] = []
+): string {
+  const hidden = new Set(hiddenTabs);
+  const renderOrder = order.filter(k => {
+    if (hidden.has(k)) return false;
+    if (k === 'SMS/MMS' && !hasSms) return false;
+    return true;
+  });
+
   return renderOrder
     .map((key, idx) => {
       const def = TAB_DEF[key];
@@ -57,10 +93,12 @@ export function buildTabButtonsHTML(order: OptionKey[], hasSms: boolean): string
     .join('');
 }
 
+/**
+ * Optional: activate the pane that matches the first generated .tab-button.
+ * Call this after you have appended your .tab-pane elements.
+ */
 export function activateInitialPane(root: ParentNode): string | undefined {
-  const firstBtn = root.querySelector<HTMLButtonElement>(
-    '.tab-navigation .tab-button'
-  );
+  const firstBtn = root.querySelector<HTMLButtonElement>('.tab-navigation .tab-button');
   const firstTab = firstBtn?.dataset.tab;
   if (!firstTab) return;
 
