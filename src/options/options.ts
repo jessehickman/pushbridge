@@ -409,7 +409,8 @@ class OptionsPage {
         this.settings.systemTheme = (e.target as HTMLInputElement).checked;
         this.saveSettings();
       });
-      
+    }
+
     // Navigation order
     const ul = document.getElementById(
       'option-order'
@@ -745,21 +746,21 @@ class OptionsPage {
 
         <div class="setting-item">
           <div class="setting-info">
-            <label>Navigation order</label>
-            <p>Drag to rearrange and click the eye icon to toggle visibility</p>
-          </div>
-          <div class="setting-control">
-            <ul id="option-order" class="dnd-list"></ul>
-          </div>
-        </div>
-
-        <div class="setting-item">
-          <div class="setting-info">
             <label for="system-theme-toggle">Match system theme</label>
             <p>Automatically switch between light and dark mode based on your system settings</p>
           </div>
           <div class="setting-control">
             <input type="checkbox" id="system-theme-toggle" class="toggle" checked="${this.settings.systemTheme}">
+          </div>
+        </div>
+
+        <div class="setting-item">
+          <div class="setting-info">
+            <label>Navigation order</label>
+            <p>Drag to rearrange and click the eye icon to toggle visibility</p>
+          </div>
+          <div class="setting-control">
+            <ul id="option-order" class="dnd-list"></ul>
           </div>
         </div>
       </div>
